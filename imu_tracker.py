@@ -1,5 +1,5 @@
 import numpy as np
-from numpy.linalg import inv, norm
+# from numpy.linalg import inv, norm
 
 import data_receiver
 from mathlib import *
@@ -47,9 +47,11 @@ class IMUTracker:
 
         # ---- gravity ----
         gn = -a.mean(axis=0)
+        print("initial gn used for computing g0 (regardless which axie align with gravity", gn)
         gn = gn[:, np.newaxis]
         # save the initial magnitude of gravity
         g0 = np.linalg.norm(gn)
+        print("initial g0", g0)
 
         # ---- magnetic field ----
         mn = m.mean(axis=0)
@@ -303,65 +305,3 @@ class IMUTracker:
         positions = np.array(positions)
         return positions
 
-
-def receive_data(mode='tcp'):
-    data = []
-
-    if mode == 'tcp':
-        r = data_receiver.Receiver()
-        file = open('data.txt', 'w')
-        print('listening...')
-        for line in r.receive():
-            file.write(line)
-            data.append(line.split(','))
-        data = np.array(data, dtype=np.float)
-        return data
-
-    if mode == 'file':
-        file = open('data.txt', 'r')
-        for line in file.readlines():
-            data.append(line.split(','))
-        data = np.array(data, dtype=np.float)
-        return data
-
-    else:
-        raise Exception('Invalid mode argument: ', mode)
-
-
-def plot_trajectory():
-    tracker = IMUTracker(sampling=100)
-    data = receive_data('file')    # toggle data source between 'tcp' and 'file' here
-
-    print('initializing...')
-    init_list = tracker.initialize(data[5:30])
-
-    print('--------')
-    print('processing...')
-    
-    # EKF step
-    a_nav, orix, oriy, oriz = tracker.attitudeTrack(data[30:], init_list)
-
-    # Acceleration correction step
-    a_nav_filtered = tracker.removeAccErr(a_nav, filter=False)
-    # plot3([a_nav, a_nav_filtered])
-
-    # ZUPT step
-    v = tracker.zupt(a_nav_filtered, threshold=0.2)
-    # plot3([v])
-
-    # Integration Step
-    p = tracker.positionTrack(a_nav_filtered, v)
-    plot3D([[p, 'position']])
-    
-    # make 3D animation
-    # xl = np.min(p[:, 0]) - 0.05
-    # xh = np.max(p[:, 0]) + 0.05
-    # yl = np.min(p[:, 1]) - 0.05
-    # yh = np.max(p[:, 1]) + 0.05
-    # zl = np.min(p[:, 2]) - 0.05
-    # zh = np.max(p[:, 2]) + 0.05
-    # plot3DAnimated(p, lim=[[xl, xh], [yl, yh], [zl, zh]], label='position', interval=5)
-
-
-if __name__ == '__main__':
-    plot_trajectory()
