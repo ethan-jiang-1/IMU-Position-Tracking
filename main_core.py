@@ -42,6 +42,9 @@ def _recv_data_csv(mode, pathname):
     import pandas as pd
     data = []
     df_data = pd.read_csv(pathname)
+    print("\n" + pathname)
+    print(df_data)
+    print(df_data.describe())
     data = df_data[["w_x","w_y","w_z","a_x","a_y","a_z","m_x","m_y","m_z"]].to_numpy()
     return data
 
@@ -55,6 +58,23 @@ def receive_data(mode='txt_file', pathname='data.txt'):
     else:
         raise Exception('Invalid mode argument: ', mode)
 
+def ex_cvs_cmp_traj(pathname, p):
+    import pandas as pd
+    from ex_traj import TrajPlotter
+    traj_pr = p
+    df_data = pd.read_csv(pathname)
+    traj_gt = df_data[["pos_x", "pos_y", "pos_z"]].to_numpy()
+
+    df_pr = pd.DataFrame(traj_pr, columns=["x", "y", "z"])
+    df_gt = pd.DataFrame(traj_gt, columns=["x", "y", "z"])
+    print("\n pred")
+    print(df_pr)
+    print(df_pr.describe())
+    print("\n gt")
+    print(df_gt)
+    print(df_gt.describe())
+
+    TrajPlotter.plot3D(traj_gt, traj_pr)    
 
 def plot_trajectory(mode="file", pathname="data.txt", sampling_rate=100):
     tracker = IMUTracker(sampling=sampling_rate)
@@ -79,7 +99,12 @@ def plot_trajectory(mode="file", pathname="data.txt", sampling_rate=100):
 
     # Integration Step
     p = tracker.positionTrack(a_nav_filtered, v)
-    plot3D([[p, 'position']])
+    if mode != "csv_file":
+        plot3D([[p, 'position']])
+    else:
+        ex_cvs_cmp_traj(pathname, p)
+
+
     
     # # make 3D animation
     # xl = np.min(p[:, 0]) - 0.05
