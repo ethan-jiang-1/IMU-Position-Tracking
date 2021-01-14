@@ -8,15 +8,6 @@ from plotlib import plot3D, plot3, plot3DAnimated
 
 from imu_tracker import IMUTracker
 
-'''
-data sample rate need to be spectied seprated, default is 100 (Hz)
-line in raw data (w: gyro) (a: acce) (m: magn)
-
-idx = {1: [0, 3], 2: [3, 6], 3: [6, 9]}
-self._widx = idx[data_order['w']]
-self._aidx = idx[data_order['a']]
-self._midx = idx[data_order['m']]
-'''
 
 def _recv_data_tcp(mode, pathname):
     import data_receiver
@@ -58,23 +49,6 @@ def receive_data(mode='txt_file', pathname='data.txt'):
     else:
         raise Exception('Invalid mode argument: ', mode)
 
-def ex_cvs_cmp_traj(pathname, p):
-    import pandas as pd
-    from ex_traj import TrajPlotter
-    traj_pr = p
-    df_data = pd.read_csv(pathname)
-    traj_gt = df_data[["pos_x", "pos_y", "pos_z"]].to_numpy()
-
-    df_pr = pd.DataFrame(traj_pr, columns=["x", "y", "z"])
-    df_gt = pd.DataFrame(traj_gt, columns=["x", "y", "z"])
-    print("\n pred")
-    print(df_pr)
-    print(df_pr.describe())
-    print("\n gt")
-    print(df_gt)
-    print(df_gt.describe())
-
-    TrajPlotter.plot3D(traj_gt, traj_pr)    
 
 def plot_trajectory(mode="file", pathname="data.txt", sampling_rate=100):
     tracker = IMUTracker(sampling=sampling_rate)
@@ -99,12 +73,7 @@ def plot_trajectory(mode="file", pathname="data.txt", sampling_rate=100):
 
     # Integration Step
     p = tracker.positionTrack(a_nav_filtered, v)
-    if mode != "csv_file":
-        plot3D([[p, 'position']])
-    else:
-        ex_cvs_cmp_traj(pathname, p)
-
-
+    plot3D([[p, 'position']])
     
     # # make 3D animation
     # xl = np.min(p[:, 0]) - 0.05
