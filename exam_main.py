@@ -26,8 +26,8 @@ def ex_cvs_cmp_traj(mode, pathname, p):
     print(df_gt)
     print(df_gt.describe())
 
-    TrajPlotter.plot3D(traj_gt, None)
-    TrajPlotter.plot3D(None, traj_pr)
+    #TrajPlotter.plot3D(traj_gt, None)
+    #TrajPlotter.plot3D(None, traj_pr)
 
     TrajPlotter.plot3D(traj_gt, traj_pr)   
 
@@ -51,7 +51,7 @@ def plot_trajectory(mode="file", pathname="data.txt", sampling_rate=100):
     #plot3([a_nav, a_nav_filtered])
 
     # ZUPT step
-    v = tracker.zupt(a_nav_filtered, threshold=0.2)
+    v = tracker.zupt(a_nav_filtered, threshold=0.002)
     #plot3([v])
 
     # Integration Step
@@ -68,6 +68,6 @@ if __name__ == '__main__':
     #pathname = "ds_csv/synced_data_03.csv"
     
     mode = "oxiod"
-    pathname = "handheld/data1:2"
+    pathname = "handheld/data1:1"
     
     plot_trajectory(mode=mode, pathname=pathname)
