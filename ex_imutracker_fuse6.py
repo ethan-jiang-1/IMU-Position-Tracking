@@ -1,6 +1,6 @@
 import numpy as np
 #from numpy.linalg import inv, norm
-
+from tqdm import tqdm
 
 from mathlib import *
 #from plotlib import *
@@ -131,7 +131,11 @@ class IMUTracker_Fuse6:
         # all vectors are column vectors
 
         t = 0
+        print("\nfuse8")
+        pbar = tqdm(total=int(sample_number/100), desc="fuse6")
         while t < sample_number:
+            if t > 0:
+                pbar.update(int(t/100))
 
             # ------------------------------- #
             # ---- 0. Data Preparation ----
@@ -210,6 +214,7 @@ class IMUTracker_Fuse6:
 
             t += 1
 
+        pbar.close()
         a_nav = np.array(a_nav)
         orix = np.array(orix)
         oriy = np.array(oriy)
@@ -327,3 +332,46 @@ class IMUTracker_Fuse6:
         positions = np.array(positions)
         return positions
 
+s_ncs = {0: {'w': 100, 'a': 100},
+       1: {'w': 50, 'a': 50},
+       2: {'w': 10, 'a': 10},
+       3: {'w': 100, 'a': 80},
+       4: {'w': 100, 'a': 40},
+       5: {'w': 100, 'a': 10}}
+
+def get_modes_by_fuse6():
+    return len(s_ncs)
+
+def is_valid_mode_by_fuse6(mode):
+    return mode in s_ncs
+
+def track_by_fuse6(data_imu, mode=None):
+    noise_coefficient = None
+    if mode is not None:
+        if mode in s_ncs:
+            noise_coefficient = s_ncs[mode]
+        else:
+            print("not valid mode", mode)
+            return None
+    tracker = IMUTracker_Fuse6(sampling=100)
+
+    print('initializing...')
+    init_list = tracker.initialize(data_imu[5:30],  noise_coefficient=noise_coefficient)
+
+    print('--------')
+    print('processing...')
+    
+    # EKF step
+    a_nav, orix, oriy, oriz = tracker.attitudeTrack(data_imu[30:], init_list)
+
+    # Acceleration correction step
+    a_nav_filtered = tracker.removeAccErr(a_nav, filter=False)
+    # plot3([a_nav, a_nav_filtered])
+
+    # ZUPT step
+    v = tracker.zupt(a_nav_filtered, threshold=0.2)
+    # plot3([v])
+
+    # Integration Step
+    p = tracker.positionTrack(a_nav_filtered, v)
+    return p

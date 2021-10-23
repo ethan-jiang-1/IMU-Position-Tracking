@@ -1,3 +1,4 @@
+from matplotlib.pyplot import title
 from plotlib import *
 
 def plot3D_one(data, lim=None, ax=None):
@@ -30,13 +31,14 @@ def plot3D_one(data, lim=None, ax=None):
     ax.plot([0], [0], [0], 'ro')
     plt.show()
 
-def plot3D_two(data1, data2):
+def plot3D_two(data1, data2, return_plt=False, mode=None):
     '''
     @param data: [[data, label_string], ...]
     @param lim: [[xl, xh], [yl, yh], [zl, zh]]
     '''
     fig = plt.figure()
     ax1 = fig.add_subplot(121, projection='3d')
+    ax1.set_title("mode: {}".format(mode))
     ax2 = fig.add_subplot(122, projection='3d')
     
     for item in data1:
@@ -61,4 +63,6 @@ def plot3D_two(data1, data2):
     ax2.set_zlabel('Z axis')
     ax2.plot([0], [0], [0], 'ro')
 
+    if return_plt:
+        return plt
     plt.show()
