@@ -1,6 +1,6 @@
-#https://github.com/masaddique/imu_gy89/blob/master/imu/fusion.py
+# https://github.com/masaddique/imu_gy89/blob/master/imu/fusion.py
 
-import time
+#import time
 import numpy
 import math
 
@@ -11,10 +11,10 @@ x = 0
 def calibrate(gyro, accelerometer):
     # this part of routine will only be for calibration process;
     rotationCorrection = [0, 0, 0]
-    magBaseCorrection = [0.065943, -0.136893, 0.082006]
-    magMatrixCorrection = numpy.array([[1.513754, -0.180472, -0.121769],
-                                       [-0.180472, 1.323883, 0.099902],
-                                       [-0.121769, 0.099902, 1.357088]])
+    ###magBaseCorrection = [0.065943, -0.136893, 0.082006]
+    ###magMatrixCorrection = numpy.array([[1.513754, -0.180472, -0.121769],
+    ###                                   [-0.180472, 1.323883, 0.099902],
+    ###                                   [-0.121769, 0.099902, 1.357088]])
 
     accelBaseCorrection = [-0.132742, -0.0044782, 0.212302]
     accelMatrixCorrection = numpy.array([[1.146868, 0.073365, -0.099336],
@@ -58,8 +58,7 @@ def calibrate(gyro, accelerometer):
         cPitch = cPitch + pitch
         cRoll = cRoll + roll
         # calculate the correction to remove gravity component
-        rotationCorrection = [-math.sin(pitch), math.sin(roll)
-                              * math.cos(pitch), math.cos(roll)*math.cos(pitch)]
+        rotationCorrection = [-math.sin(pitch), math.sin(roll) * math.cos(pitch), math.cos(roll)*math.cos(pitch)]
         aCorrect = aRes-rotationCorrection
 
         cAc = numpy.append(cAc, numpy.array([aCorrect]), axis=0)
@@ -105,10 +104,10 @@ def kalmanFilter(gyro, accelerometer, aMV, debug=0):
     rotationCorrection = [0, 0, 0]
 
     rotationCorrection = [0, 0, 0]
-    magBaseCorrection = [0.065943, -0.136893, 0.082006]
-    magMatrixCorrection = numpy.array([[1.513754, -0.180472, -0.121769],
-                                       [-0.180472, 1.323883, 0.099902],
-                                       [-0.121769, 0.099902, 1.357088]])
+    ###magBaseCorrection = [0.065943, -0.136893, 0.082006]
+    ###magMatrixCorrection = numpy.array([[1.513754, -0.180472, -0.121769],
+    ###                                   [-0.180472, 1.323883, 0.099902],
+    ###                                   [-0.121769, 0.099902, 1.357088]])
 
     accelBaseCorrection = [-0.132742, -0.0044782, 0.212302]
     accelMatrixCorrection = numpy.array([[1.146868, 0.073365, -0.099336],
@@ -116,15 +115,15 @@ def kalmanFilter(gyro, accelerometer, aMV, debug=0):
                                          [-0.09936, -0.026481, 1.217730]])
 
     cGyMean = aMV[1]
-    cGyVar = aMV[0]
+    ###cGyVar = aMV[0]
     cAcVar = aMV[2]
     cAcMean = aMV[3]
     cAnglesVar = aMV[4]
-    cAngleMean = aMV[5]
+    ###cAngleMean = aMV[5]
 
     #angle = [cRoll, cPitch, cYaw];
-    timeTT = 20000000  # 20 ms
-    te = 1
+    ###timeTT = 20000000  # 20 ms
+    ###te = 1
     # these are the kalman filter vaiables#
     nx = 12
     nz = 6
@@ -355,8 +354,7 @@ def kalmanFilter(gyro, accelerometer, aMV, debug=0):
         pitch = math.atan2(-aRes[0], math.sqrt(aRes[1]**2 + aRes[2]**2))
         roll = math.atan2(aRes[1], aRes[2])
         # calculate the correction to remove gravity component
-        rotationCorrection = [-math.sin(pitch), math.sin(roll)
-                              * math.cos(pitch), math.cos(roll)*math.cos(pitch)]
+        rotationCorrection = [-math.sin(pitch), math.sin(roll) * math.cos(pitch), math.cos(roll)*math.cos(pitch)]
         aCorrect = aRes-rotationCorrection-cAcMean
         # correct magnetometer for yaw
         ###magXcorrect = mRes[0]*math.cos(pitch) + mRes[1]*math.sin(
@@ -409,7 +407,7 @@ class GyroReader:
         if self.cur_ndx >= len(self.data_gyo):
             return None
         num = read_ms // 10
-        rdata = self.data_gyo[self.cur_ndx :self.cur_ndx + 1]
+        rdata = self.data_gyo[self.cur_ndx:self.cur_ndx + 1]
         self.cur_ndx += num
         return rdata[0]
     
@@ -422,13 +420,13 @@ class AcceReader:
         if self.cur_ndx >= len(self.data_acc):
             return None
         num = read_ms // 10
-        rdata = self.data_acc[self.cur_ndx :self.cur_ndx + 1]
+        rdata = self.data_acc[self.cur_ndx:self.cur_ndx + 1]
         self.cur_ndx += num
         #hack add G to acc_z
         #rdata[0][2] += 1
         return rdata[0]    
 
-def track_by_kalman6(data_imu, mode=None):
+def track_by_gy89(data_imu, mode=None):
     import numpy as np
     gyro = GyroReader(data_imu)
     accelerometer = AcceReader(data_imu)

@@ -281,6 +281,7 @@ class IMUTracker_Fuse6:
         velocities = []
         prevt = -1
         still_phase = False
+        still_phase_cnt = 0
 
         v = np.zeros((3, 1))
         t = 0
@@ -294,6 +295,7 @@ class IMUTracker_Fuse6:
                     v_drift_rate = predict_v / (t - prevt)
                     for i in range(t - prevt - 1):
                         velocities[prevt + 1 + i] -= (i + 1) * v_drift_rate.T[0]
+                    still_phase_cnt += 1
 
                 v = np.zeros((3, 1))
                 prevt = t
@@ -305,6 +307,7 @@ class IMUTracker_Fuse6:
             velocities.append(v.T[0])
             t += 1
 
+        print("found still phase cnt", still_phase_cnt)
         velocities = np.array(velocities)
         return velocities
 
@@ -348,7 +351,7 @@ def get_modes_by_fuse6():
 def is_valid_mode_by_fuse6(mode):
     return mode in s_ncs
 
-def track_by_fuse6(data_imu, mode=None):
+def track_by_IPT(data_imu, mode=None):
     noise_coefficient = None
     if mode is not None:
         if mode in s_ncs:

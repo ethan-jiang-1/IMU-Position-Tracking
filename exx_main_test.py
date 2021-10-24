@@ -3,65 +3,64 @@ import numpy as np
 
 from ex_datasrc import receive_imu, receive_gt
 from ex_plot import plot3D_two
+from ex_distance import cal_distance
 
 
-def _get_data(dirname="ds_Kiast/sensor_data_urban07_00"):
+def _get_data(dirname):
     print("using data under", dirname)
     data_imu = receive_imu(dirname + "/imu.csv")    # toggle data source between 'tcp' and 'file' here
     data_gt = receive_gt(dirname + "/gt.csv")
     return data_imu, data_gt
 
-def _plot_ani(p):
-    # make 3D animation
-    # xl = np.min(p[:, 0]) - 0.05
-    # xh = np.max(p[:, 0]) + 0.05
-    # yl = np.min(p[:, 1]) - 0.05
-    # yh = np.max(p[:, 1]) + 0.05
-    # zl = np.min(p[:, 2]) - 0.05
-    # zh = np.max(p[:, 2]) + 0.05
-    # plot3DAnimated(p, lim=[[xl, xh], [yl, yh], [zl, zh]], label='position', interval=5)
-    pass
-
-def _get_tracker_function():
-    from ex_imutracker_fuse6 import track_by_fuse6
-    return track_by_fuse6
-
-    #from ex_imutracker_kalman6 import track_by_kalman6
-    #return track_by_kalman6
-
 def _get_tracker_functions():
     track_funs = {}
-    from ex_imutracker_fuse6 import track_by_fuse6
-    track_funs["fuse6"] = track_by_fuse6
+    from ex_imutracker_IPT import track_by_IPT
+    track_funs["IPT:IMU-Position-Tracking"] = track_by_IPT
 
-    from ex_imutracker_kalman6 import track_by_kalman6
-    track_funs["kalman6"] = track_by_kalman6
+    from ex_imutracker_gy89 import track_by_gy89
+    track_funs["gy89:imu_gy89"] = track_by_gy89
 
     return track_funs
 
-def do_exec_main_same_tracker():
-    data_imu, data_gt = _get_data()
+def show_pd_dis(data_pos, name=None):
+    if name is not None:
+        print("name", name)
+    pd_p_et = pd.DataFrame(np.array(data_pos), columns=["x", "y", "z"])
+    print(pd_p_et)
+    dis_total_et, dis_3_et, distances_et = cal_distance(data_pos)
+    print("100", dis_total_et)
+    print("100", dis_3_et)
+    dis_total_et, dis_3_et, distances_et = cal_distance(data_pos, cal_steps=50)
+    print(" 50", dis_total_et)
+    print(" 50", dis_3_et)
+    print()
 
-    tracker_func = _get_tracker_function()
+def show_result_by_mode(data_et, data_gt, mode):
+    show_pd_dis(data_gt, "groundturth")
+    show_pd_dis(data_et, "estimation_{}".format(mode))
+
+    plot_data_et = [[data_et, 'position']]
+    plot_data_gt = [[data_gt, 'position']]
+    #plot3D_one(plot_data)
+    plt = plot3D_two(plot_data_et, plot_data_gt, return_plt=True, mode=mode)
+    plt.show()
+
+def do_exec_main_same_tracker(dirname, tracker_func=None):
+    data_imu, data_gt = _get_data(dirname)
+
+    if tracker_func is None:
+        from ex_imutracker_IPT import track_by_IPT
+        tracker_func = track_by_IPT
 
     for mode in range(1):
         data_et = tracker_func(data_imu, mode=mode)
         if data_et is None:
             continue
 
-        pd_p_et = pd.DataFrame(np.array(data_et), columns=["x", "y", "z"])
-        print(pd_p_et)
-        pd_p_gt = pd.DataFrame(np.array(data_gt), columns=["x", "y", "z"])
-        print(pd_p_gt)
+        show_result_by_mode(data_et, data_gt, mode)
 
-        plot_data_et = [[data_et, 'position']]
-        plot_data_gt = [[data_gt, 'position']]
-        #plot3D_one(plot_data)
-        plt = plot3D_two(plot_data_et, plot_data_gt, return_plt=True, mode=mode)
-        plt.show()
-
-def do_exec_main_all_trackers():
-    data_imu, data_gt = _get_data()
+def do_exec_main_all_trackers(dirname):
+    data_imu, data_gt = _get_data(dirname)
 
     tracker_funcs = _get_tracker_functions()
 
@@ -75,22 +74,26 @@ def do_exec_main_all_trackers():
             continue
         data_ets[key] = data_et
 
-        #plot_data_et = [[data_et, 'position']]
-        #plot_data_gt = [[data_gt, 'position']]
-        #plot3D_one(plot_data)
-        #plt = plot3D_two(plot_data_et, plot_data_gt, return_plt=True, mode=mode)
-        #plt.show()
-
-    pd_p_gt = pd.DataFrame(np.array(data_gt), columns=["x", "y", "z"])
-    print("ground truth")
-    print(pd_p_gt)
+    show_pd_dis(data_gt, "groundturth")
     for key, data_et in data_ets.items():
-        pd_p_et = pd.DataFrame(np.array(data_et), columns=["x", "y", "z"])
-        print()
-        print("estimate ", key)
-        print(pd_p_et)
+        show_pd_dis(data_et, "estimation_{}".format(key))
 
 
 if __name__ == '__main__':
-    #do_exec_main_same_tracker()
-    do_exec_main_all_trackers()
+    #dirname ="ds_Kiast/sensor_data_urban07_00"
+    #dirname ="ds_Oxiod_running/running_data1_syn_imu1"
+    #dirname = "ds_Ridi/dan_body1"
+
+    #dirname = "ds_Ridi/dan_body1"          # 1/2
+    #dirname = "ds_Ridi/dan_body2"          # 1/2
+    #dirname = "ds_Ridi/hang_bag_speed1"    # 1/2
+    #dirname = "ds_Ridi/hang_bag_speed2"    # 1/2
+    #dirname = "ds_Ridi/hang_body_fast1"    # 1/2
+    #dirname = "ds_Ridi/hang_body_normal1"  # 2/3 97/153
+    #dirname = "ds_Ridi/zhicheng_body1"     # 4/5 124/144
+    #dirname = "ds_Ridi/zhicheng_body2"     # 4/5 53/66
+    #dirname = "ds_Ridi/hao_body1"          # 39/65
+    dirname = "ds_Ridi/hao_body2"           # 61/64
+
+    do_exec_main_same_tracker(dirname)
+    #do_exec_main_all_trackers(dirname)
