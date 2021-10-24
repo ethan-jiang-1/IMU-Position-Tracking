@@ -1,4 +1,3 @@
-from matplotlib.pyplot import title
 from plotlib import *
 
 def plot3D_one(data, lim=None, ax=None):

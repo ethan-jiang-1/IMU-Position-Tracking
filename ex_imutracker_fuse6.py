@@ -1,3 +1,5 @@
+#https://github.com/LibofRelax/IMU-Position-Tracking
+
 import numpy as np
 #from numpy.linalg import inv, norm
 from tqdm import tqdm
@@ -131,8 +133,8 @@ class IMUTracker_Fuse6:
         # all vectors are column vectors
 
         t = 0
-        print("\nfuse8")
-        pbar = tqdm(total=int(sample_number/100), desc="fuse6")
+        print("\nFuse6 Kalman")
+        pbar = tqdm(total=int(sample_number/100), desc="Fuse6 Kalman")
         while t < sample_number:
             if t > 0:
                 pbar.update(int(t/100))
@@ -332,6 +334,7 @@ class IMUTracker_Fuse6:
         positions = np.array(positions)
         return positions
 
+
 s_ncs = {0: {'w': 100, 'a': 100},
        1: {'w': 50, 'a': 50},
        2: {'w': 10, 'a': 10},
@@ -355,23 +358,30 @@ def track_by_fuse6(data_imu, mode=None):
             return None
     tracker = IMUTracker_Fuse6(sampling=100)
 
-    print('initializing...')
+    print()
+    print('##Step1: initializing...')
     init_list = tracker.initialize(data_imu[5:30],  noise_coefficient=noise_coefficient)
 
-    print('--------')
-    print('processing...')
+    print()
+    print('##Step2: processing (Kalman filter)...')
     
     # EKF step
     a_nav, orix, oriy, oriz = tracker.attitudeTrack(data_imu[30:], init_list)
 
+    print()
+    print('##Step3: remove Acc Err...')
     # Acceleration correction step
     a_nav_filtered = tracker.removeAccErr(a_nav, filter=False)
     # plot3([a_nav, a_nav_filtered])
 
+    print()
+    print("##Step4: Zupt find still pauses...")
     # ZUPT step
     v = tracker.zupt(a_nav_filtered, threshold=0.2)
     # plot3([v])
 
+    print()
+    print("##Step5: using processed acc and fililted v (zupt) to cal position")
     # Integration Step
     p = tracker.positionTrack(a_nav_filtered, v)
     return p
